@@ -34,3 +34,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Viewed bracket-generator.ts:76-93
+Ran command: `npm run dev`
+Viewed page.tsx:1-176
+Edited page.tsx
+
+I've added a **"Show Data"** button to the top header! 
+
+When you click it, a side panel will slide out on the right showing the full JSON representation of the currently active tournament bracket. The data updates dynamically whenever you switch tabs or change the custom bracket settings, so you can easily verify exactly what data is being fed into the `TournamentBracket` component. 
+
+Check it out and let me know if you need any adjustments!
+
+
+spliting bracket 
+

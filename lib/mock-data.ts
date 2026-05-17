@@ -25,19 +25,60 @@ export const generateSingleElimination8 = (): Match[] => {
     },
     // Semi-Finals (Round 2)
     {
-      id: 'm5', name: 'Game 5', nextMatchId: 'm7', tournamentRoundText: 'Semi-Finals',
+      id: 'm5', name: 'Game 5', nextMatchId: 'gf', nextLooserMatchId: '3rd', tournamentRoundText: 'Semi-Finals',
       state: 'IN_PROGRESS', participants: [p('p1', 'Player 1', 1), p('p5', 'Player 5', 5)], scores: [1, 0]
     },
     {
-      id: 'm6', name: 'Game 6', nextMatchId: 'm7', tournamentRoundText: 'Semi-Finals',
+      id: 'm6', name: 'Game 6', nextMatchId: 'gf', nextLooserMatchId: '3rd', tournamentRoundText: 'Semi-Finals',
       state: 'SCHEDULED', participants: [p('p3', 'Player 3', 3), p('p2', 'Player 2', 2)], scores: [null, null]
     },
     // Final (Round 3)
     {
-      id: 'm7', name: 'Final', tournamentRoundText: 'Final',
+      id: 'gf', name: 'Grand Final', tournamentRoundText: 'Grand Final',
+      state: 'SCHEDULED', participants: [null, null], scores: [null, null]
+    },
+    // 3rd Place Match (Sub bracket)
+    {
+      id: '3rd', name: '3rd Place Match', tournamentRoundText: '3rd Place',
       state: 'SCHEDULED', participants: [null, null], scores: [null, null]
     }
   ];
+};
+
+export const generateComplexPlacementTournament = (): Match[] => {
+    return [
+        // Main Bracket
+        {
+            id: 'sf1', name: 'Semi Final 1', nextMatchId: 'f1', nextLooserMatchId: '3rd', tournamentRoundText: 'Semifinals',
+            state: 'COMPLETED', participants: [p('p1', 'Player 1'), p('p2', 'Player 2')], scores: [3, 1], winnerId: 'p1', group: 'Championship Bracket'
+        },
+        {
+            id: 'sf2', name: 'Semi Final 2', nextMatchId: 'f1', nextLooserMatchId: '3rd', tournamentRoundText: 'Semifinals',
+            state: 'COMPLETED', participants: [p('p3', 'Player 3'), p('p4', 'Player 4')], scores: [0, 3], winnerId: 'p4', group: 'Championship Bracket'
+        },
+        {
+            id: 'f1', name: 'Final', tournamentRoundText: 'Final',
+            state: 'SCHEDULED', participants: [p('p1', 'Player 1'), p('p4', 'Player 4')], scores: [null, null], group: 'Championship Bracket'
+        },
+        // 3rd Place Match (Disconnected from Winners Final nextMatchId, but fed by Losers of SF)
+        {
+            id: '3rd', name: '3rd Place Match', tournamentRoundText: 'Placement',
+            state: 'SCHEDULED', participants: [p('p2', 'Player 2'), p('p3', 'Player 3')], scores: [null, null], group: '3rd Place Bracket'
+        },
+        // 17th Place Standalone Bracket (completely disconnected)
+        {
+            id: '17th-sf1', name: '17th Place SF1', nextMatchId: '17th-f', tournamentRoundText: '17th Place Semis',
+            state: 'COMPLETED', participants: [p('p17', 'Player 17'), p('p18', 'Player 18')], scores: [2, 1], winnerId: 'p17', group: '17th Place Bracket'
+        },
+        {
+            id: '17th-sf2', name: '17th Place SF2', nextMatchId: '17th-f', tournamentRoundText: '17th Place Semis',
+            state: 'COMPLETED', participants: [p('p19', 'Player 19'), p('p20', 'Player 20')], scores: [0, 2], winnerId: 'p20', group: '17th Place Bracket'
+        },
+        {
+            id: '17th-f', name: '17th Place Final', tournamentRoundText: '17th Place Final',
+            state: 'SCHEDULED', participants: [p('p17', 'Player 17'), p('p20', 'Player 20')], scores: [null, null], group: '17th Place Bracket'
+        }
+    ];
 };
 
 export const generateDoubleElimination4 = (): Match[] => {

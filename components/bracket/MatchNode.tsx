@@ -15,9 +15,11 @@ interface MatchNodeProps {
   height: number;
   hoveredParticipantId: string | null;
   onHoverParticipant: (id: string | null) => void;
+  onDoubleClick?: (match: Match) => void;
+  config?: import('../../types/bracket').BracketConfig;
 }
 
-export function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant }: MatchNodeProps) {
+export function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant, onDoubleClick, config }: MatchNodeProps) {
   const [p1, p2] = match.participants;
   const [s1, s2] = match.scores;
 
@@ -26,9 +28,11 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
 
   const renderParticipant = (p: Participant | null, score: number | null, isWinner: boolean) => {
     if (!p) {
+      // If the match is completed and this participant is null, it means it's a BYE
+      const isBye = match.state === 'COMPLETED';
       return (
         <div className="flex items-center justify-between px-3 py-1.5 opacity-50 bg-slate-50 border-b border-slate-100 last:border-0 h-10">
-           <span className="text-sm text-slate-400 italic">TBD</span>
+           <span className="text-sm text-slate-400 italic font-medium">{isBye ? 'BYE' : 'TBD'}</span>
         </div>
       );
     }
@@ -60,8 +64,23 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
     );
   };
 
+  if (config?.renderMatch) {
+    return (
+      <div id={match.id} style={{ position: 'absolute', left: x, top: y, width, height }}>
+        {config.renderMatch({
+          match,
+          x, y, width, height,
+          hoveredParticipantId,
+          onHoverParticipant,
+          onDoubleClick
+        })}
+      </div>
+    );
+  }
+
   return (
     <div
+      id={match.id}
       className={cn(
         "absolute group transition-opacity duration-200",
         isDimmed ? "opacity-30 grayscale" : "opacity-100"
@@ -76,10 +95,13 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
       <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1 px-1">
         {match.tournamentRoundText} • {match.name}
       </div>
-      <div className={cn(
-        "flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all",
-        hasHoveredParticipant && "border-indigo-400 shadow-md ring-1 ring-indigo-400"
-      )}>
+      <div 
+        className={cn(
+          "flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all cursor-pointer",
+          hasHoveredParticipant && "border-indigo-400 shadow-md ring-1 ring-indigo-400"
+        )}
+        onDoubleClick={() => onDoubleClick?.(match)}
+      >
         {renderParticipant(p1, s1, match.winnerId === p1?.id)}
         {renderParticipant(p2, s2, match.winnerId === p2?.id)}
       </div>

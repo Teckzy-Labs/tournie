@@ -20,6 +20,7 @@ export type Match = {
   scores: [number | null, number | null]; // Matches participant order
   winnerId?: string;
   isLoserBracket?: boolean; // For Double Elimination
+  group?: string; // e.g. "Winners Bracket", "Losers Bracket", "3rd Place Match"
 };
 
 export type Tournament = {
@@ -27,6 +28,7 @@ export type Tournament = {
   name: string;
   matches: Match[];
   type: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'MULTI_STAGE';
+  config?: BracketConfig;
 };
 
 // Internal representation for layout calculation
@@ -49,3 +51,45 @@ export type Connector = {
   endY: number;
   isLoserBracket?: boolean;
 };
+
+export type LayoutGroup = {
+  id: string;
+  title: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+// ==========================================
+// CONFIGURATION TYPES
+// ==========================================
+
+export interface CustomMatchProps {
+  match: Match;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hoveredParticipantId: string | null;
+  onHoverParticipant: (participantId: string | null) => void;
+  onDoubleClick?: (match: Match) => void;
+}
+
+export interface BracketConfig {
+  /** Width of the match card */
+  nodeWidth?: number;
+  /** Height of the match card */
+  nodeHeight?: number;
+  /** Custom renderer for the match card */
+  renderMatch?: (props: CustomMatchProps) => React.ReactNode;
+  /** Custom renderer for the match details dialog */
+  renderMatchDetailsDialog?: (match: Match, onClose: () => void) => React.ReactNode;
+  
+  /** Theming/Styling Overrides */
+  classNames?: {
+    wrapper?: string;
+    connector?: string;
+    connectorHighlighted?: string;
+  };
+}

@@ -13,9 +13,11 @@ interface ConnectorsProps {
   width: number;
   height: number;
   hoveredParticipantId: string | null;
+  className?: string;
+  highlightedClassName?: string;
 }
 
-export function Connectors({ connectors, nodes, width, height, hoveredParticipantId }: ConnectorsProps) {
+export function Connectors({ connectors, nodes, width, height, hoveredParticipantId, className, highlightedClassName }: ConnectorsProps) {
   // Generate a step path for clean bracket lines
   const generatePath = (c: Connector) => {
     const midX = c.startX + (c.endX - c.startX) / 2;
@@ -51,7 +53,7 @@ export function Connectors({ connectors, nodes, width, height, hoveredParticipan
           strokeWidth="2"
           className={cn(
             "transition-colors duration-200",
-            hoveredParticipantId && !isConnectorHovered(c) ? "text-slate-100 opacity-30" : "text-slate-300",
+            hoveredParticipantId && !isConnectorHovered(c) ? "text-slate-100 opacity-30" : (className || "text-slate-300"),
             hoveredParticipantId && isConnectorHovered(c) ? "text-indigo-500 z-10" : ""
           )}
           strokeLinecap="round"
@@ -66,7 +68,7 @@ export function Connectors({ connectors, nodes, width, height, hoveredParticipan
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className="text-indigo-500"
+          className={highlightedClassName || "text-indigo-500"}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
