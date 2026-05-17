@@ -65,8 +65,8 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
         minScale={0.2}
         maxScale={2}
         centerOnInit={true}
-        wheel={{ step: 0.1, wheelDisabled: true }} // Disable zooming with scroll wheel
-        panning={{ wheelPanning: true }} // Enable panning with scroll wheel instead
+        wheel={{ step: 0.1 }}
+        panning={{ disabled: false }}
         pinch={{ disabled: zoomLocked }} // Disable pinch zooming if locked
       >
         {({ zoomIn, zoomOut, resetTransform, zoomToElement }) => (
