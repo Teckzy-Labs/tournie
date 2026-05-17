@@ -1,7 +1,8 @@
-import { Match } from '../types/bracket';
+import { Match, Participant } from '../types/bracket';
+import { generateDynamicSingleElimination, generateDynamicDoubleElimination } from './bracket-generator';
 
 // Helper to generate participants
-const p = (id: string, name: string, seed?: number) => ({ id, name, seed, status: 'active' as const });
+const p = (id: string, name: string, seed?: number): Participant => ({ id, name, seed, status: 'active' as const });
 
 // Helper to generate an 8-player Single Elimination Bracket
 export const generateSingleElimination8 = (): Match[] => {
@@ -114,4 +115,83 @@ export const generateDoubleElimination4 = (): Match[] => {
             state: 'SCHEDULED', participants: [p('p1', 'Player 1'), p('p2', 'Player 2')], scores: [null, null]
         }
     ];
+}
+
+export const generateCompletedTournament = (players: number, isDouble: boolean): Match[] => {
+    const matches = isDouble 
+        ? generateDynamicDoubleElimination(players)
+        : generateDynamicSingleElimination(players);
+        
+    // We need to simulate the tournament by propagating winners.
+    // In a flat array where matches reference nextMatchId, we can iteratively resolve matches.
+    let unresolvedMatches = matches.filter(m => m.state !== 'COMPLETED');
+    let safetyCounter = 0;
+    
+    while (unresolvedMatches.length > 0 && safetyCounter < 1000) {
+        safetyCounter++;
+        let resolvedAny = false;
+        
+        for (let i = 0; i < matches.length; i++) {
+            const m = matches[i];
+            if (m.state === 'COMPLETED') continue;
+            
+            // A match is ready to be played if both participants are known and not null
+            // Note: BYEs might have one null. If a match has 1 participant and it's Round 1, it's a BYE.
+            // But our dynamic generator already sets BYE match state to COMPLETED and winnerId to the player.
+            // Wait, our generator doesn't set state to COMPLETED for BYEs, it just sets winnerId.
+            // So let's handle BYEs first:
+            if (m.winnerId && m.state !== 'COMPLETED') {
+                 m.state = 'COMPLETED';
+                 propagateWinner(m, matches);
+                 resolvedAny = true;
+                 continue;
+            }
+            
+            // If both participants are populated (from previous rounds propagating)
+            if (m.participants[0] && m.participants[1]) {
+                const p1Wins = Math.random() > 0.4;
+                m.scores = p1Wins ? [3, 1] : [1, 3];
+                m.winnerId = p1Wins ? m.participants[0].id : m.participants[1].id;
+                m.state = 'COMPLETED';
+                propagateWinner(m, matches);
+                resolvedAny = true;
+            }
+        }
+        
+        if (!resolvedAny) break; // Cannot progress
+        unresolvedMatches = matches.filter(m => m.state !== 'COMPLETED');
+    }
+    
+    // Some matches might be currently live
+    // Let's make the Grand Final IN_PROGRESS if we resolved everything
+    const grandFinal = matches.find(m => m.name === 'Grand Final' || m.nextMatchId === undefined);
+    if (grandFinal && grandFinal.state === 'COMPLETED') {
+        grandFinal.state = 'IN_PROGRESS';
+        grandFinal.scores = [1, 1]; // tie score
+        grandFinal.winnerId = undefined;
+    }
+    
+    return matches;
+};
+
+function propagateWinner(completedMatch: Match, allMatches: Match[]) {
+    const winner = completedMatch.participants.find(p => p?.id === completedMatch.winnerId);
+    const loser = completedMatch.participants.find(p => p && p.id !== completedMatch.winnerId);
+    
+    if (winner && completedMatch.nextMatchId) {
+        const nextMatch = allMatches.find(m => m.id === completedMatch.nextMatchId);
+        if (nextMatch) {
+            // Put winner in first available slot
+            if (!nextMatch.participants[0]) nextMatch.participants[0] = winner;
+            else if (!nextMatch.participants[1]) nextMatch.participants[1] = winner;
+        }
+    }
+    
+    if (loser && completedMatch.nextLooserMatchId) {
+        const lbMatch = allMatches.find(m => m.id === completedMatch.nextLooserMatchId);
+        if (lbMatch) {
+            if (!lbMatch.participants[0]) lbMatch.participants[0] = loser;
+            else if (!lbMatch.participants[1]) lbMatch.participants[1] = loser;
+        }
+    }
 }

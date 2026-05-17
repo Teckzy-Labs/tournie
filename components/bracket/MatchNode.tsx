@@ -15,11 +15,12 @@ interface MatchNodeProps {
   height: number;
   hoveredParticipantId: string | null;
   onHoverParticipant: (id: string | null) => void;
+  onClick?: (match: Match) => void;
   onDoubleClick?: (match: Match) => void;
   config?: import('../../types/bracket').BracketConfig;
 }
 
-export function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant, onDoubleClick, config }: MatchNodeProps) {
+export function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant, onClick, onDoubleClick, config }: MatchNodeProps) {
   const [p1, p2] = match.participants;
   const [s1, s2] = match.scores;
 
@@ -72,34 +73,44 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
           x, y, width, height,
           hoveredParticipantId,
           onHoverParticipant,
+          onClick,
           onDoubleClick
         })}
       </div>
     );
   }
 
+  const isLive = match.state === 'IN_PROGRESS';
+
   return (
     <div
       id={match.id}
-      className={cn(
-        "absolute group transition-opacity duration-200",
-        isDimmed ? "opacity-30 grayscale" : "opacity-100"
-      )}
+      className={`absolute flex flex-col transition-all duration-200 z-10 ${isDimmed ? "opacity-30 grayscale" : "opacity-100"}`}
       style={{
         left: x,
         top: y,
         width,
-        height,
+        height
       }}
     >
-      <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1 px-1">
-        {match.tournamentRoundText} • {match.name}
-      </div>
-      <div 
-        className={cn(
-          "flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all cursor-pointer",
-          hasHoveredParticipant && "border-indigo-400 shadow-md ring-1 ring-indigo-400"
+      {/* External Header */}
+      <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-1 px-1">
+        <span className="truncate">{match.tournamentRoundText} • {match.name}</span>
+        {isLive && (
+          <div className="flex items-center gap-1 text-red-500">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span>LIVE</span>
+          </div>
         )}
+      </div>
+      
+      {/* Match Card */}
+      <div 
+        className={`flex-1 flex flex-col bg-white rounded-lg shadow-sm border ${isLive ? 'border-red-400 shadow-[0_0_15px_rgba(248,113,113,0.3)]' : 'border-slate-200'} overflow-hidden hover:shadow-md hover:border-indigo-400 transition-all cursor-pointer ${hasHoveredParticipant ? 'ring-1 ring-indigo-400' : ''}`}
+        onClick={() => onClick?.(match)}
         onDoubleClick={() => onDoubleClick?.(match)}
       >
         {renderParticipant(p1, s1, match.winnerId === p1?.id)}

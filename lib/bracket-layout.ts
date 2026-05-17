@@ -1,7 +1,7 @@
 import { Match, LayoutNode, Connector, LayoutGroup } from '../types/bracket';
 
 export const DEFAULT_NODE_WIDTH = 220;
-export const DEFAULT_NODE_HEIGHT = 80;
+export const DEFAULT_NODE_HEIGHT = 100;
 export const DEFAULT_HORIZONTAL_SPACING = 50;
 export const DEFAULT_VERTICAL_SPACING = 30;
 
@@ -23,17 +23,17 @@ export function calculateBracketLayout(matches: Match[], options: LayoutOptions 
   // 1. Assign default groups if not specified
   matches.forEach(m => {
     if (!m.group) {
-      m.group = m.isLoserBracket ? "Losers Bracket" : "Winners Bracket";
+      m.group = m.isLoserBracket ? "Losers Bracket" : "Championship Bracket";
     }
   });
 
   // 2. Separate into unique groups
   const groupNames = Array.from(new Set(matches.map(m => m.group!)));
   
-  // Sort groups: "Winners Bracket" first, "Losers Bracket" second, then alphabetical
+  // Sort groups: "Championship Bracket" first, "Losers Bracket" second, then alphabetical
   groupNames.sort((a, b) => {
-    if (a === "Winners Bracket") return -1;
-    if (b === "Winners Bracket") return 1;
+    if (a === "Championship Bracket") return -1;
+    if (b === "Championship Bracket") return 1;
     if (a === "Losers Bracket") return -1;
     if (b === "Losers Bracket") return 1;
     return a.localeCompare(b);

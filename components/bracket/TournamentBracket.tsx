@@ -137,7 +137,11 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
                     hoveredParticipantId={hoveredParticipantId}
                     onHoverParticipant={setHoveredParticipantId}
                     config={config}
+                    onClick={(match) => {
+                      config.onMatchClick?.(match);
+                    }}
                     onDoubleClick={(match) => {
+                      config.onMatchDoubleClick?.(match);
                       setSelectedMatch(match);
                       if (!zoomLocked) {
                         zoomToElement(match.id, 1.2, 500); // 1.2 scale, 500ms animation

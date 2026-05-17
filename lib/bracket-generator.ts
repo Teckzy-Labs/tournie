@@ -40,6 +40,7 @@ export function generateDynamicSingleElimination(numPlayers: number, includeThir
       participants: [p1, p2],
       scores: [null, null],
       winnerId: isBye ? p1.id : undefined,
+      group: 'Championship Bracket'
     });
   }
 
@@ -74,6 +75,7 @@ export function generateDynamicSingleElimination(numPlayers: number, includeThir
           match2.winnerId ? match2.participants.find(p => p?.id === match2.winnerId) || null : null,
         ],
         scores: [null, null],
+        group: 'Championship Bracket'
       };
       
       nextRoundMatches.push(newMatch);
@@ -231,7 +233,8 @@ export function generateDynamicDoubleElimination(numPlayers: number): Match[] {
     tournamentRoundText: `Grand Final`,
     state: 'SCHEDULED',
     participants: [null, null],
-    scores: [null, null]
+    scores: [null, null],
+    group: 'Championship Bracket'
   };
   
   finalMatch.nextMatchId = grandFinal.id;

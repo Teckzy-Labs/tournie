@@ -73,6 +73,7 @@ export interface CustomMatchProps {
   height: number;
   hoveredParticipantId: string | null;
   onHoverParticipant: (participantId: string | null) => void;
+  onClick?: (match: Match) => void;
   onDoubleClick?: (match: Match) => void;
 }
 
@@ -81,6 +82,11 @@ export interface BracketConfig {
   nodeWidth?: number;
   /** Height of the match card */
   nodeHeight?: number;
+  
+  /** Callbacks */
+  onMatchClick?: (match: Match) => void;
+  onMatchDoubleClick?: (match: Match) => void;
+
   /** Custom renderer for the match card */
   renderMatch?: (props: CustomMatchProps) => React.ReactNode;
   /** Custom renderer for the match details dialog */
