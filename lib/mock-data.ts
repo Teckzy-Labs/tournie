@@ -1,4 +1,4 @@
-import { Match, Participant } from '../types/bracket';
+import { Match, MatchStatus, Participant } from '../types/bracket';
 import { generateDynamicSingleElimination, generateDynamicDoubleElimination } from './bracket-generator';
 
 // Helper to generate participants
@@ -124,25 +124,24 @@ export const generateCompletedTournament = (players: number, isDouble: boolean):
         
     // We need to simulate the tournament by propagating winners.
     // In a flat array where matches reference nextMatchId, we can iteratively resolve matches.
-    let unresolvedMatches = matches.filter(m => m.state !== 'COMPLETED');
+    // Cast to mutable Match array so TypeScript doesn't narrow state to a literal subset
+    const allMatches = matches as (Omit<Match, 'state'> & { state: MatchStatus })[];
+    let unresolvedMatches = allMatches.filter(m => m.state !== 'COMPLETED');
     let safetyCounter = 0;
     
     while (unresolvedMatches.length > 0 && safetyCounter < 1000) {
         safetyCounter++;
         let resolvedAny = false;
         
-        for (let i = 0; i < matches.length; i++) {
-            const m = matches[i];
+        for (let i = 0; i < allMatches.length; i++) {
+            const m = allMatches[i];
             if (m.state === 'COMPLETED') continue;
             
-            // A match is ready to be played if both participants are known and not null
-            // Note: BYEs might have one null. If a match has 1 participant and it's Round 1, it's a BYE.
-            // But our dynamic generator already sets BYE match state to COMPLETED and winnerId to the player.
-            // Wait, our generator doesn't set state to COMPLETED for BYEs, it just sets winnerId.
-            // So let's handle BYEs first:
-            if (m.winnerId && m.state !== 'COMPLETED') {
+            // A match is ready to be played if both participants are known and not null.
+            // Handle BYEs: generator may set winnerId without setting state to COMPLETED.
+            if (m.winnerId) {
                  m.state = 'COMPLETED';
-                 propagateWinner(m, matches);
+                 propagateWinner(m as Match, matches);
                  resolvedAny = true;
                  continue;
             }
@@ -153,18 +152,18 @@ export const generateCompletedTournament = (players: number, isDouble: boolean):
                 m.scores = p1Wins ? [3, 1] : [1, 3];
                 m.winnerId = p1Wins ? m.participants[0].id : m.participants[1].id;
                 m.state = 'COMPLETED';
-                propagateWinner(m, matches);
+                propagateWinner(m as Match, matches);
                 resolvedAny = true;
             }
         }
         
         if (!resolvedAny) break; // Cannot progress
-        unresolvedMatches = matches.filter(m => m.state !== 'COMPLETED');
+        unresolvedMatches = allMatches.filter(m => m.state !== 'COMPLETED');
     }
     
     // Some matches might be currently live
     // Let's make the Grand Final IN_PROGRESS if we resolved everything
-    const grandFinal = matches.find(m => m.name === 'Grand Final' || m.nextMatchId === undefined);
+    const grandFinal = allMatches.find(m => m.name === 'Grand Final' || m.nextMatchId === undefined);
     if (grandFinal && grandFinal.state === 'COMPLETED') {
         grandFinal.state = 'IN_PROGRESS';
         grandFinal.scores = [1, 1]; // tie score
