@@ -4,6 +4,9 @@ import { calculateBracketLayout, DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from 
 import { MatchNode } from './MatchNode';
 import { Connectors } from './Connectors';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
 
 interface TournamentBracketProps {
   tournament: Tournament;
@@ -14,6 +17,55 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
   const [hoveredParticipantId, setHoveredParticipantId] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [zoomLocked, setZoomLocked] = useState<boolean>(false);
+  const bracketRef = React.useRef<HTMLDivElement>(null);
+  
+  const exportToPDF = async () => {
+    if (!bracketRef.current) return;
+    try {
+      // html-to-image supports modern CSS features (like oklch/lab colors used by Tailwind v4)
+      const imgData = await toPng(bracketRef.current, { 
+        cacheBust: true, 
+        quality: 1,
+        pixelRatio: 2 
+      });
+      
+      const img = new window.Image();
+      img.onload = () => {
+        const pdf = new jsPDF({
+          orientation: img.width > img.height ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [img.width, img.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, img.width, img.height);
+        pdf.save(`${tournament.name || 'Tournament'}_Bracket.pdf`);
+      };
+      img.src = imgData;
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      const rows = tournament.matches.map(m => ({
+        ID: m.id,
+        Name: m.name,
+        Round: m.tournamentRoundText,
+        Status: m.state,
+        Participant_1: m.participants[0]?.name || 'TBD',
+        Score_1: m.scores[0] ?? '',
+        Participant_2: m.participants[1]?.name || 'TBD',
+        Score_2: m.scores[1] ?? '',
+        Winner: m.participants.find(p => p?.id === m.winnerId)?.name || ''
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Bracket Data');
+      XLSX.writeFile(wb, `${tournament.name || 'Tournament'}_Bracket.xlsx`);
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+    }
+  };
 
   // Merge the config embedded in the tournament data with any props passed in
   const config = useMemo(() => {
@@ -59,15 +111,20 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
   const offsetY = minY < 0 ? Math.abs(minY) + 50 : 50;
 
   return (
-    <div className={`w-full h-full relative overflow-hidden bg-slate-50/50 p-0 rounded-xl border border-slate-200 shadow-inner group/bracket ${config.classNames?.wrapper || ''}`}>
+    <div className={`w-full h-full relative overflow-hidden bg-slate-50/50 p-0 rounded-xl border border-slate-200 shadow-inner group/bracket flex flex-col ${config.classNames?.wrapper || ''}`}>
+      <div className="flex-1 relative overflow-hidden" ref={bracketRef}>
       <TransformWrapper
         initialScale={1}
-        minScale={0.2}
+        minScale={0.3}
         maxScale={2}
-        centerOnInit={true}
-        wheel={{ step: 0.1 }}
+        centerOnInit={false}
+        initialPositionX={20}
+        initialPositionY={20}
+        wheel={{ step: 0.02, disabled: zoomLocked }}
         panning={{ disabled: false }}
-        pinch={{ disabled: zoomLocked }} // Disable pinch zooming if locked
+        pinch={{ disabled: zoomLocked, step: 3 }}
+        doubleClick={{ disabled: zoomLocked, mode: 'reset' }}
+        limitToBounds={false}
       >
         {({ zoomIn, zoomOut, resetTransform, zoomToElement }) => (
           <>
@@ -93,6 +150,13 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
               <div className="w-px bg-slate-200 my-1 mx-0.5"></div>
               <button disabled={zoomLocked} onClick={() => resetTransform()} className={`p-1.5 rounded-md transition-colors ${zoomLocked ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'}`} title="Fit to Screen">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14v6h6M20 10V4h-6M10 20H4v-6M14 4h6v6" /></svg>
+              </button>
+              <div className="w-px bg-slate-200 my-1 mx-0.5"></div>
+              <button onClick={exportToPDF} className="p-1.5 rounded-md text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors" title="Export PDF">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-4"/><path d="M12 15v-4"/><path d="M15 15v-4"/></svg>
+              </button>
+              <button onClick={exportToExcel} className="p-1.5 rounded-md text-slate-600 hover:text-green-600 hover:bg-green-50 transition-colors" title="Export Excel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </button>
             </div>
 
@@ -154,6 +218,13 @@ export function TournamentBracket({ tournament, config: propsConfig = {} }: Tour
           </>
         )}
       </TransformWrapper>
+      </div>
+
+      <div className="bg-white border-t border-slate-200 py-2 px-4 flex items-center justify-center shrink-0 z-10 shadow-sm relative">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          Made with <span className="text-rose-500">❤️</span> by <span className="font-bold text-indigo-600">AKASH Singh</span>
+        </p>
+      </div>
 
       {selectedMatch && (
         config.renderMatchDetailsDialog
