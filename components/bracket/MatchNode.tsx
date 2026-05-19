@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Match, Participant } from '../../types/bracket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -20,14 +20,22 @@ interface MatchNodeProps {
   config?: import('../../types/bracket').BracketConfig;
 }
 
-export function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant, onClick, onDoubleClick, config }: MatchNodeProps) {
+export const MatchNode = React.memo(function MatchNode({ match, x, y, width, height, hoveredParticipantId, onHoverParticipant, onClick, onDoubleClick, config }: MatchNodeProps) {
   const [p1, p2] = match.participants;
   const [s1, s2] = match.scores;
 
   const hasHoveredParticipant = hoveredParticipantId && match.participants.some(p => p?.id === hoveredParticipantId);
   const isDimmed = hoveredParticipantId && !hasHoveredParticipant;
 
-  const renderParticipant = (p: Participant | null, score: number | null, isWinner: boolean) => {
+  const handleClick = useCallback(() => {
+    onClick?.(match);
+  }, [match, onClick]);
+
+  const handleDoubleClick = useCallback(() => {
+    onDoubleClick?.(match);
+  }, [match, onDoubleClick]);
+
+  const renderParticipant = useCallback((p: Participant | null, score: number | null, isWinner: boolean) => {
     if (!p) {
       // If the match is completed and this participant is null, it means it's a BYE
       const isBye = match.state === 'COMPLETED';
@@ -63,7 +71,7 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
         </div>
       </div>
     );
-  };
+  }, [hoveredParticipantId, match.state, onHoverParticipant]);
 
   if (config?.renderMatch) {
     return (
@@ -110,12 +118,12 @@ export function MatchNode({ match, x, y, width, height, hoveredParticipantId, on
       {/* Match Card */}
       <div 
         className={`flex-1 flex flex-col bg-white rounded-lg shadow-sm border ${isLive ? 'border-red-400 shadow-[0_0_15px_rgba(248,113,113,0.3)]' : 'border-slate-200'} overflow-hidden hover:shadow-md hover:border-indigo-400 transition-all cursor-pointer ${hasHoveredParticipant ? 'ring-1 ring-indigo-400' : ''}`}
-        onClick={() => onClick?.(match)}
-        onDoubleClick={() => onDoubleClick?.(match)}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
       >
         {renderParticipant(p1, s1, match.winnerId === p1?.id)}
         {renderParticipant(p2, s2, match.winnerId === p2?.id)}
       </div>
     </div>
   );
-}
+});

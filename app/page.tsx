@@ -5,6 +5,7 @@ import { generateSingleElimination8, generateDoubleElimination4, generateComplex
 import { generateDynamicSingleElimination, generateDynamicDoubleElimination } from '../lib/bracket-generator';
 import { TournamentBracket } from '../components/bracket/TournamentBracket';
 import { Tournament } from '../types/bracket';
+import { validateTournament } from '../lib/tournament-validation';
 
 const tournaments: Record<string, Tournament> = {
   se8: {
@@ -52,6 +53,8 @@ export default function Home() {
   const [customFormat, setCustomFormat] = useState<'SE' | 'DE'>('SE');
   const [useCustomTheme, setUseCustomTheme] = useState<boolean>(false);
   const [showData, setShowData] = useState<boolean>(false);
+  const [showMinimap, setShowMinimap] = useState<boolean>(true);
+  const [enableVirtualization, setEnableVirtualization] = useState<boolean>(false);
 
   const currentTournament = useMemo(() => {
     if (activeTab === 'custom') {
@@ -67,6 +70,8 @@ export default function Home() {
     }
     return tournaments[activeTab];
   }, [activeTab, customPlayers, customFormat]);
+
+  const validationIssues = useMemo(() => validateTournament(currentTournament), [currentTournament]);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col overflow-hidden">
@@ -138,13 +143,42 @@ export default function Home() {
           >
             {showData ? 'Hide Data' : 'Show Data'}
           </button>
+          <div className="flex items-center shrink-0 gap-2 px-3 py-1.5 border-l border-slate-200">
+            <input
+              type="checkbox"
+              id="showMinimap"
+              checked={showMinimap}
+              onChange={(e) => setShowMinimap(e.target.checked)}
+              className="rounded text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="showMinimap" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">
+              Minimap
+            </label>
+          </div>
+          <div className="flex items-center shrink-0 gap-2 px-3 py-1.5">
+            <input
+              type="checkbox"
+              id="enableVirtualization"
+              checked={enableVirtualization}
+              onChange={(e) => setEnableVirtualization(e.target.checked)}
+              className="rounded text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="enableVirtualization" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">
+              Virtualize
+            </label>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 p-2 sm:p-6 flex flex-col min-h-0 bg-slate-50/50">
         <div className="mb-2 sm:mb-4 shrink-0">
           <h2 className="text-lg sm:text-2xl font-semibold mb-1">{currentTournament.name}</h2>
-          <p className="text-slate-500 text-xs sm:text-sm">Responsive SVG paths, dynamic layouts, and path tracking. Try hovering over a player!</p>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            Responsive SVG paths, dynamic layouts, path tracking, minimap navigation, and optional viewport culling.
+            {validationIssues.length > 0 && (
+              <span className="ml-2 text-amber-600 font-medium">{validationIssues.length} validation warning{validationIssues.length === 1 ? '' : 's'}</span>
+            )}
+          </p>
         </div>
 
         <div className="flex-1 flex gap-4 min-h-0">
@@ -154,6 +188,8 @@ export default function Home() {
               config={useCustomTheme ? {
                 nodeWidth: 260,
                 nodeHeight: 90,
+                showMinimap,
+                enableVirtualization,
                 classNames: {
                   wrapper: 'bg-zinc-900',
                   connector: 'text-zinc-700',
@@ -184,7 +220,11 @@ export default function Home() {
                     </div>
                   </div>
                 )
-              } : undefined}
+              } : {
+                showMinimap,
+                enableVirtualization
+              }}
+              virtualization={enableVirtualization}
             />
           </div>
 
@@ -201,7 +241,7 @@ export default function Home() {
               </div>
               <div className="flex-1 overflow-auto p-4">
                 <pre className="text-xs text-emerald-400 font-mono">
-                  {JSON.stringify(currentTournament, null, 2)}
+                  {JSON.stringify({ tournament: currentTournament, validationIssues }, null, 2)}
                 </pre>
               </div>
             </div>

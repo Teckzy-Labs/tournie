@@ -223,7 +223,11 @@ function calculateForestLayout(
   return { nodes, connectors };
 }
 
-function getDepth(node: any): number {
+type DepthNode = {
+  children?: DepthNode[];
+};
+
+function getDepth(node: DepthNode): number {
   if (!node.children || node.children.length === 0) return 0;
   return 1 + Math.max(...node.children.map(getDepth));
 }

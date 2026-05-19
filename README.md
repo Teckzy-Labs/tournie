@@ -60,3 +60,39 @@ for Offline Mode .
 We can add No of plyer and name of player to the libray the libray will display the bracket with  tith round 1 . The user will have ability to start the match add score make progress and complete the full brackt . 
 
 Before locking the bracket we can adkust the brackt to move player change seeding adjust brackt of BYE to anyother player of wanted and then lock the bracket and then only match could be started and clicking a match will lock the match of the brackt after declaring the score and winner the it unlocks for a new match to avaoid deadlock this will work as offline data source a similar class will have server datasource but it will have all operation from server the clint will just make api calls 
+
+
+
+
+
+Bracket → SVG → PDF
+SVG or Canvas rendering eventually becomes superio
+
+Add Render Modes
+renderMode:
+- dom
+- svg
+- canvas
+
+E. Convert Layout Engine to DAG-based
+
+This is the biggest future-proofing step.
+
+. Use ID-Based State
+
+Avoid storing entire objects in state.
+
+A. Split Component
+
+Current component is too large.
+
+Split into:
+
+TournamentBracket
+ ├── BracketToolbar
+ ├── BracketCanvas
+ ├── BracketGroups
+ ├── BracketNodes
+ ├── BracketConnectors
+ ├── MatchDialog
+ └── ExportHandlers
